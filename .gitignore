@@ -1,0 +1,58 @@
+# Byte-compiled files
+__pycache__/
+*.py[cod]
+*.pyo
+
+# Virtual environment folder
+env/
+venv/
+ENV/
+*.env
+
+# Environment variables
+.env
+
+# Logs
+*.log
+*.out
+*.err
+
+# Database files
+*.sqlite3
+*.db
+
+# Python egg files
+*.egg
+*.egg-info/
+dist/
+build/
+*.manifest
+*.spec
+
+# Caches
+.cache/
+*.tmp
+*.swp
+*.bak
+*.orig
+*.sav
+
+# IDE settings (VSCode, PyCharm, etc.)
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# OS-generated files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Dependency directories
+__pycache__/
+pip-log.txt
+pip-delete-this-directory.txt
+
+# FastAPI-related
+instance/
+uploads/
