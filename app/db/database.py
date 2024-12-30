@@ -2,6 +2,7 @@ from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
 from dotenv import load_dotenv
 import os
+from ..base import Base  # Ensure this imports all models
 
 # Load environment variables
 load_dotenv(os.path.join(os.path.dirname(__file__), "../../.env"))
@@ -22,3 +23,9 @@ SessionLocal = sessionmaker(bind=engine, class_=AsyncSession, expire_on_commit=F
 async def get_db():
     async with SessionLocal() as session:
         yield session
+
+# Function to create missing tables
+async def create_tables():
+    async with engine.begin() as conn:
+        # Create all missing tables
+        await conn.run_sync(Base.metadata.create_all)
