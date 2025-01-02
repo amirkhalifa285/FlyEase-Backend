@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Float, JSON
+from sqlalchemy import Column, Integer, String, JSON, Text
 from ..base import Base
 
 class Location(Base):
@@ -6,5 +6,8 @@ class Location(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, nullable=False)
-    type = Column(String, nullable=False)  # e.g., gate, security, lounge
-    coordinates = Column(JSON, nullable=True)  # Optional: For map rendering
+    type = Column(String, nullable=False)
+    category = Column(String, nullable=True)  # Optional category for grouping
+    description = Column(Text, nullable=True)  # Optional description
+    coordinates = Column(JSON, nullable=False)  # Required JSON field for coordinates
+    #details = Column(JSON, nullable=True)  # Additional data (e.g., menu, hours)

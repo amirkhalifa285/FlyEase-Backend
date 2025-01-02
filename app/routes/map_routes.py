@@ -9,8 +9,6 @@ from app.controllers.map_controller import (
     get_map_data,
     populate_mock_map,
     calculate_shortest_path
-
-
 )
 from ..auth.auth_utils import admin_only
 from pydantic import BaseModel

@@ -42,14 +42,25 @@ async def get_map_data(db: AsyncSession):
     # Fetch all locations
     locations_query = await db.execute(select(Location))
     locations = [
-        {"id": loc.id, "name": loc.name, "type": loc.type, "coordinates": loc.coordinates}
+        {
+            "id": loc.id,
+            "name": loc.name,
+            "type": loc.type,
+            "category": loc.category,
+            "coordinates": loc.coordinates,
+        }
         for loc in locations_query.scalars()
     ]
 
     # Fetch all paths
     paths_query = await db.execute(select(Path))
     paths = [
-        {"id": path.id, "source_id": path.source_id, "destination_id": path.destination_id, "distance": path.distance}
+        {
+            "id": path.id,
+            "source_id": path.source_id,
+            "destination_id": path.destination_id,
+            "distance": path.distance,
+        }
         for path in paths_query.scalars()
     ]
 
