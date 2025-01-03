@@ -10,6 +10,7 @@ from app.controllers.map_controller import (
     populate_mock_map,
     calculate_shortest_path
 )
+
 from ..auth.auth_utils import admin_only
 from pydantic import BaseModel
 
@@ -65,3 +66,9 @@ async def remove_location(
     Only admins can access this route.
     """
     return await delete_location(location_id, db)
+
+
+# @router.get("/mappedin/map")
+# async def get_mappedin_map():
+#     """API endpoint to fetch MappedIn map data."""
+#     return await fetch_mappedin_map()

@@ -5,6 +5,7 @@ from app.models.location import Location
 from app.models.path import Path
 from ..db.database import get_db
 from fastapi import HTTPException
+import requests
 
 async def populate_mock_map(db: AsyncSession):
     # Add sample locations
@@ -161,3 +162,5 @@ async def delete_location(location_id: int, db: AsyncSession):
     await db.delete(location)
     await db.commit()
     return {"message": "Location deleted successfully."}
+
+
