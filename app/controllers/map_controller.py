@@ -6,6 +6,7 @@ from app.models.path import Path
 from ..db.database import get_db
 from fastapi import HTTPException
 import requests
+from ..models.wall import Wall
 
 async def populate_mock_map(db: AsyncSession):
     # Add sample locations
@@ -40,7 +41,7 @@ async def populate_mock_map(db: AsyncSession):
 
 
 async def get_map_data(db: AsyncSession):
-    # Fetch all locations
+    # Fetch locations
     locations_query = await db.execute(select(Location))
     locations = [
         {
@@ -53,7 +54,7 @@ async def get_map_data(db: AsyncSession):
         for loc in locations_query.scalars()
     ]
 
-    # Fetch all paths
+    # Fetch paths
     paths_query = await db.execute(select(Path))
     paths = [
         {
@@ -65,13 +66,51 @@ async def get_map_data(db: AsyncSession):
         for path in paths_query.scalars()
     ]
 
-    return {"locations": locations, "paths": paths}
+    # Fetch walls
+    walls = await get_walls(db)
+
+    return {"locations": locations, "paths": paths, "walls": walls}
+
+#utility func for walls
+def line_segments_intersect(p1, q1, p2, q2):
+    """Check if two line segments (p1q1 and p2q2) intersect."""
+
+    def orientation(a, b, c):
+        val = (b[1] - a[1]) * (c[0] - b[0]) - (b[0] - a[0]) * (c[1] - b[1])
+        if val == 0:
+            return 0  # Collinear
+        return 1 if val > 0 else 2  # Clockwise or counterclockwise
+
+    def on_segment(a, b, c):
+        return (
+            min(a[0], b[0]) <= c[0] <= max(a[0], b[0])
+            and min(a[1], b[1]) <= c[1] <= max(a[1], b[1])
+        )
+
+    o1 = orientation(p1, q1, p2)
+    o2 = orientation(p1, q1, q2)
+    o3 = orientation(p2, q2, p1)
+    o4 = orientation(p2, q2, q1)
+
+    if o1 != o2 and o3 != o4:
+        return True
+
+    # Special cases
+    if o1 == 0 and on_segment(p1, q1, p2):
+        return True
+    if o2 == 0 and on_segment(p1, q1, q2):
+        return True
+    if o3 == 0 and on_segment(p2, q2, p1):
+        return True
+    if o4 == 0 and on_segment(p2, q2, q1):
+        return True
+
+    return False
+
+
 
 async def calculate_shortest_path(source_id: int, destination_id: int, db: AsyncSession):
-    from sqlalchemy.future import select
-    from app.models.location import Location
-    from app.models.path import Path
-    import heapq
+    
 
     # Fetch all paths and build the graph
     result = await db.execute(select(Path))
@@ -81,6 +120,19 @@ async def calculate_shortest_path(source_id: int, destination_id: int, db: Async
     for path in paths:
         graph.setdefault(path.source_id, []).append((path.destination_id, path.distance))
         graph.setdefault(path.destination_id, []).append((path.source_id, path.distance))
+
+    # Fetch all walls
+    walls_query = await db.execute(select(Wall))
+    walls = walls_query.scalars().all()
+
+    # Utility function to check if a line intersects any wall
+    def intersects_wall(x1, y1, x2, y2):
+        for wall in walls:
+            if line_segments_intersect(
+                (x1, y1), (x2, y2), (wall.x1, wall.y1), (wall.x2, wall.y2)
+            ):
+                return True
+        return False
 
     # Implement Dijkstra's Algorithm
     def dijkstra(graph, start, end):
@@ -96,9 +148,24 @@ async def calculate_shortest_path(source_id: int, destination_id: int, db: Async
                 return path, cost
             visited.add(node)
             for neighbor, weight in graph.get(node, []):
-                heapq.heappush(pq, (cost + weight, neighbor, path))
+                # Get coordinates of the current and neighbor nodes
+                curr_location = next(
+                    (loc for loc in locations if loc.id == node), None
+                )
+                neighbor_location = next(
+                    (loc for loc in locations if loc.id == neighbor), None
+                )
+                if curr_location and neighbor_location:
+                    x1, y1 = curr_location.coordinates["x"], curr_location.coordinates["y"]
+                    x2, y2 = neighbor_location.coordinates["x"], neighbor_location.coordinates["y"]
+                    if not intersects_wall(x1, y1, x2, y2):  # Skip paths intersecting walls
+                        heapq.heappush(pq, (cost + weight, neighbor, path))
 
         return None, float("inf")  # No path found
+
+    # Fetch all locations
+    locations_query = await db.execute(select(Location))
+    locations = locations_query.scalars().all()
 
     # Calculate shortest path
     path, total_distance = dijkstra(graph, source_id, destination_id)
@@ -107,10 +174,9 @@ async def calculate_shortest_path(source_id: int, destination_id: int, db: Async
 
     # Fetch human-readable location names
     location_query = await db.execute(select(Location).filter(Location.id.in_(path)))
-    locations = {loc.id: loc.name for loc in location_query.scalars()}
+    location_mapping = {loc.id: loc.name for loc in location_query.scalars()}
 
-    # Map IDs to names in the path
-    readable_path = [locations[loc_id] for loc_id in path]
+    readable_path = [location_mapping[loc_id] for loc_id in path]
 
     return {"path": readable_path, "total_distance": total_distance}
 
@@ -164,3 +230,17 @@ async def delete_location(location_id: int, db: AsyncSession):
     return {"message": "Location deleted successfully."}
 
 
+async def get_walls(db: AsyncSession):
+    # Fetch all walls from the database
+    walls_query = await db.execute(select(Wall))
+    walls = [
+        {
+            "id": wall.id,
+            "x1": wall.x1,
+            "y1": wall.y1,
+            "x2": wall.x2,
+            "y2": wall.y2,
+        }
+        for wall in walls_query.scalars()
+    ]
+    return walls
