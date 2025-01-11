@@ -7,6 +7,9 @@ from ..db.database import get_db
 from fastapi import HTTPException
 import requests
 from ..models.wall import Wall
+import random
+
+SECURITY_AND_CHECKIN_IDS = [59, 39, 38, 60, 61, 37, 34, 33, 32, 31, 30, 29] #for simulating congestion
 
 async def populate_mock_map(db: AsyncSession):
     # Add sample locations
@@ -106,7 +109,6 @@ def line_segments_intersect(p1, q1, p2, q2):
         return True
 
     return False
-
 
 
 async def calculate_shortest_path(source_id: int, destination_id: int, db: AsyncSession):
@@ -229,7 +231,6 @@ async def delete_location(location_id: int, db: AsyncSession):
     await db.commit()
     return {"message": "Location deleted successfully."}
 
-
 async def get_walls(db: AsyncSession):
     # Fetch all walls from the database
     walls_query = await db.execute(select(Wall))
@@ -244,3 +245,72 @@ async def get_walls(db: AsyncSession):
         for wall in walls_query.scalars()
     ]
     return walls
+
+async def update_congestion(db: AsyncSession):
+    # Fetch all paths leading to the specified locations
+    query = select(Path).where(Path.destination_id.in_(SECURITY_AND_CHECKIN_IDS))
+    result = await db.execute(query)
+    paths = result.scalars().all()
+
+    # Update congestion values randomly
+    for path in paths:
+        path.congestion = random.randint(1, 10)  # Random value between 1 (low) and 10 (high)
+        db.add(path)  # Add to session
+
+    await db.commit()
+
+async def calculate_overall_congestion(db: AsyncSession):
+    # Calculate the overall congestion level
+    query = select(Path).where(Path.destination_id.in_(SECURITY_AND_CHECKIN_IDS))
+    result = await db.execute(query)
+    paths = result.scalars().all()
+
+    total_congestion = sum(path.congestion for path in paths)
+    num_paths = len(paths)
+    avg_congestion = total_congestion / num_paths if num_paths > 0 else 0
+
+    # Determine congestion level
+    if avg_congestion <= 3:
+        return {"level": "Low", "value": avg_congestion}
+    elif avg_congestion <= 6:
+        return {"level": "Medium", "value": avg_congestion}
+    else:
+        return {"level": "High", "value": avg_congestion}
+    
+
+async def update_and_fetch_congestion(db: AsyncSession):
+    # Step 1: Update congestion values
+    paths_query = await db.execute(select(Path))
+    paths = paths_query.scalars().all()
+
+    import random
+    for path in paths:
+        path.congestion = random.randint(1, 10)  # Random congestion value between 1 and 10
+        db.add(path)  # Add path back to session for update
+
+    await db.commit()  # Commit changes to the database
+
+    # Step 2: Calculate overall congestion level
+    total_congestion = sum(path.congestion for path in paths)
+    num_paths = len(paths)
+    avg_congestion = total_congestion / num_paths if num_paths > 0 else 0
+
+    overall_congestion = {}
+    if avg_congestion <= 3:
+        overall_congestion = {"level": "Low", "value": avg_congestion}
+    elif avg_congestion <= 6:
+        overall_congestion = {"level": "Medium", "value": avg_congestion}
+    else:
+        overall_congestion = {"level": "High", "value": avg_congestion}
+
+    # Step 3: Return updated paths and overall congestion
+    updated_paths = [
+        {
+            "source_id": path.source_id,
+            "destination_id": path.destination_id,
+            "congestion": path.congestion,
+        }
+        for path in paths
+    ]
+
+    return {**overall_congestion, "paths": updated_paths}

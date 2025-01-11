@@ -8,3 +8,4 @@ class Path(Base):
     source_id = Column(Integer, ForeignKey("locations.id"), nullable=False)
     destination_id = Column(Integer, ForeignKey("locations.id"), nullable=False)
     distance = Column(Float, nullable=False)  # Distance or travel time
+    congestion = Column(Integer, default=1)

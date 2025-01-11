@@ -39,4 +39,9 @@ async def login(db, username: str, password: str):
     
     # Generate JWT token
     token = create_access_token({"sub": user.username, "role": user.role})
-    return {"access_token": token, "token_type": "bearer"}
+    return {
+        "access_token": token,
+        "token_type": "bearer",
+        "role": user.role  # Include role in the response
+    }
+

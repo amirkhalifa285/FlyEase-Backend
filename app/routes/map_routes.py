@@ -8,7 +8,8 @@ from app.controllers.map_controller import (
     delete_location,
     get_map_data,
     populate_mock_map,
-    calculate_shortest_path
+    calculate_shortest_path,
+    update_and_fetch_congestion
 )
 
 from ..auth.auth_utils import admin_only
@@ -68,7 +69,7 @@ async def remove_location(
     return await delete_location(location_id, db)
 
 
-# @router.get("/mappedin/map")
-# async def get_mappedin_map():
-#     """API endpoint to fetch MappedIn map data."""
-#     return await fetch_mappedin_map()
+@router.post("/map/update-congestion")
+async def update_and_fetch_congestion_route(db: AsyncSession = Depends(get_db)):
+    return await update_and_fetch_congestion(db)
+    
