@@ -5,42 +5,42 @@ from app.models.location import Location
 from app.models.path import Path
 from ..db.database import get_db
 from fastapi import HTTPException
-import requests
+# import requests
 from ..models.wall import Wall
 import random
 
 SECURITY_AND_CHECKIN_IDS = [59, 39, 38, 60, 61, 37, 34, 33, 32, 31, 30, 29] #for simulating congestion
 
-async def populate_mock_map(db: AsyncSession):
-    # Add sample locations
-    locations = [
-        {"name": "Gate A1", "type": "gate", "coordinates": {"x": 0, "y": 0}},
-        {"name": "Gate A2", "type": "gate", "coordinates": {"x": 5, "y": 0}},
-        {"name": "Security Checkpoint", "type": "security", "coordinates": {"x": 10, "y": 5}},
-        {"name": "Lounge", "type": "lounge", "coordinates": {"x": 15, "y": 5}},
-    ]
+# async def populate_mock_map(db: AsyncSession):
+#     # Add sample locations
+#     locations = [
+#         {"name": "Gate A1", "type": "gate", "coordinates": {"x": 0, "y": 0}},
+#         {"name": "Gate A2", "type": "gate", "coordinates": {"x": 5, "y": 0}},
+#         {"name": "Security Checkpoint", "type": "security", "coordinates": {"x": 10, "y": 5}},
+#         {"name": "Lounge", "type": "lounge", "coordinates": {"x": 15, "y": 5}},
+#     ]
 
-    # Insert locations into the database
-    for loc in locations:
-        location = Location(**loc)
-        db.add(location)
-    await db.commit()
+#     # Insert locations into the database
+#     for loc in locations:
+#         location = Location(**loc)
+#         db.add(location)
+#     await db.commit()
 
-    # Fetch IDs for locations
-    result = await db.execute(select(Location))
-    loc_ids = {loc.name: loc.id for loc in result.scalars().all()}
+#     # Fetch IDs for locations
+#     result = await db.execute(select(Location))
+#     loc_ids = {loc.name: loc.id for loc in result.scalars().all()}
 
-    # Add sample paths
-    paths = [
-        {"source_id": loc_ids["Gate A1"], "destination_id": loc_ids["Gate A2"], "distance": 5},
-        {"source_id": loc_ids["Gate A2"], "destination_id": loc_ids["Security Checkpoint"], "distance": 7},
-        {"source_id": loc_ids["Security Checkpoint"], "destination_id": loc_ids["Lounge"], "distance": 5},
-    ]
+#     # Add sample paths
+#     paths = [
+#         {"source_id": loc_ids["Gate A1"], "destination_id": loc_ids["Gate A2"], "distance": 5},
+#         {"source_id": loc_ids["Gate A2"], "destination_id": loc_ids["Security Checkpoint"], "distance": 7},
+#         {"source_id": loc_ids["Security Checkpoint"], "destination_id": loc_ids["Lounge"], "distance": 5},
+#     ]
 
-    # Insert paths into the database
-    for path in paths:
-        db.add(Path(**path))
-    await db.commit()
+#     # Insert paths into the database
+#     for path in paths:
+#         db.add(Path(**path))
+#     await db.commit()
 
 
 async def get_map_data(db: AsyncSession):
@@ -178,9 +178,9 @@ async def calculate_shortest_path(source_id: int, destination_id: int, db: Async
     location_query = await db.execute(select(Location).filter(Location.id.in_(path)))
     location_mapping = {loc.id: loc.name for loc in location_query.scalars()}
 
-    readable_path = [location_mapping[loc_id] for loc_id in path]
+    #readable_path = [location_mapping[loc_id] for loc_id in path]
 
-    return {"path": readable_path, "total_distance": total_distance}
+    return {"path": path, "total_distance": total_distance}
 
 
 """ (class) AsyncSession

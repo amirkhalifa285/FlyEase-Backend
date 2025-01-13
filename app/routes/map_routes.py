@@ -7,7 +7,6 @@ from app.controllers.map_controller import (
     update_location,
     delete_location,
     get_map_data,
-    populate_mock_map,
     calculate_shortest_path,
     update_and_fetch_congestion
 )
@@ -21,10 +20,10 @@ class NavigationRequest(BaseModel):
 
 router = APIRouter()
 
-@router.post("/map/populate")
-async def populate_map(db: AsyncSession = Depends(get_db)):
-    await populate_mock_map(db)
-    return {"message": "Mock map data populated successfully"}
+# @router.post("/map/populate")
+# async def populate_map(db: AsyncSession = Depends(get_db)):
+#     await populate_mock_map(db)
+#     return {"message": "Mock map data populated successfully"}
 
 @router.get("/map")
 async def fetch_map(db: AsyncSession = Depends(get_db)):
