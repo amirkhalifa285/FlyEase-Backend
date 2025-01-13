@@ -73,11 +73,12 @@ async def fetch_and_cache_tickets(origin: str, destination: str, departure_date:
     await db.commit()
 
 async def get_cached_tickets(origin: str, destination: str, departure_date: str, db: AsyncSession):
-    # Query the database for tickets with the same parameters
     stmt = select(Ticket).where(
         Ticket.origin == origin,
         Ticket.destination == destination,
         Ticket.departure_time.like(f"{departure_date}%")
     )
     result = await db.execute(stmt)
-    return result.scalars().all()
+    tickets = result.scalars().all()
+    return [{"origin": t.origin, "destination": t.destination, "departure_time": t.departure_time,
+             "arrival_time": t.arrival_time, "price": t.price, "airline_name": t.airline_name} for t in tickets]
