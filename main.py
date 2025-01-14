@@ -32,9 +32,10 @@ app.add_middleware(
 
 app.include_router(auth_router, prefix="/api/auth")  # Include authentication routes
 app.include_router(flight_router, prefix="/api")  # Include flight routes
-# app.include_router(service_router, prefix="/api")  # Include service routes
-app.include_router(map_router, prefix="/api")
+
 app.include_router(ticket_router, prefix="/api")
+
+
 
 @app.get("/")
 def read_root():

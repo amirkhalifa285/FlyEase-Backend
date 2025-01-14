@@ -17,6 +17,16 @@ async def get_tickets(db: AsyncSession = Depends(get_db)):
     tickets = result.scalars().all()
     return [ticket.to_dict() for ticket in tickets]
 
+@router.get("/tickets/{flight_number}")
+async def get_ticket_by_flight_number(flight_number: str, db: AsyncSession = Depends(get_db)):
+    """
+    Fetch a ticket by flight number from the database.
+    """
+    result = await db.execute(select(Ticket).where(Ticket.flight_number == flight_number))
+    ticket = result.scalar_one_or_none()
+    if not ticket:
+        raise HTTPException(status_code=404, detail="Ticket not found")
+    return ticket.to_dict()
 
 class FetchTicketsRequest(BaseModel):
     origin: str
