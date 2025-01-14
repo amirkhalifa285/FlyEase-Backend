@@ -3,7 +3,7 @@ from sqlalchemy.sql import func
 from ..base import Base
 
 class User(Base):
-    __tablename__ = "users"
+    __tablename__ = "users"  # Corrected this line
     id = Column(Integer, primary_key=True, index=True)
     username = Column(String, unique=True, nullable=False)
     password_hash = Column(String, nullable=False)

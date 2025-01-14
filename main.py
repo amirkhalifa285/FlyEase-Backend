@@ -21,16 +21,15 @@ async def lifespan(app: FastAPI):
 # Use the lifespan function directly in FastAPI
 app = FastAPI(lifespan=lifespan)
 
-# Middleware for CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],  # Allow only your frontend
+    allow_origins=["http://localhost:3000", "http://192.168.56.1:3000"],  # Add both frontend origins
     allow_credentials=True,
     allow_methods=["*"],  # Allow all HTTP methods
     allow_headers=["*"],  # Allow all headers
 )
-
 # Include routes
+
 app.include_router(auth_router, prefix="/api/auth")  # Include authentication routes
 app.include_router(flight_router, prefix="/api")  # Include flight routes
 # app.include_router(service_router, prefix="/api")  # Include service routes
