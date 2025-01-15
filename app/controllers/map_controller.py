@@ -244,6 +244,7 @@ async def get_walls(db: AsyncSession):
         }
         for wall in walls_query.scalars()
     ]
+    print("Fetched walls:", walls)
     return walls
 
 async def update_congestion(db: AsyncSession):

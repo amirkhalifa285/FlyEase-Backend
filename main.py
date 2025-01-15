@@ -7,7 +7,10 @@ from app.routes.flight_routes import router as flight_router
 from app.auth.auth_routes import router as auth_router
 from app.routes.map_routes import router as map_router
 from app.routes.tickets_router import router as ticket_router
+from app.routes.hotel_router import router as hotel_router
+from app.routes.car_routes import router as car_router
 from app.db.database import create_tables
+from dotenv import load_dotenv
 
 
 # Initialize FastAPI app
@@ -28,12 +31,27 @@ app.add_middleware(
     allow_methods=["*"],  # Allow all HTTP methods
     allow_headers=["*"],  # Allow all headers
 )
+<<<<<<< HEAD
 # Include routes
 
 app.include_router(auth_router, prefix="/api/auth")  # Include authentication routes
 app.include_router(flight_router, prefix="/api")  # Include flight routes
 
+=======
+
+load_dotenv()  # Load variables from .env into the environment
+print("Client ID:", os.getenv("AMADEUS_CLIENT_ID"))
+print("Client Secret:", os.getenv("AMADEUS_CLIENT_SECRET"))
+
+# Include routes
+app.include_router(auth_router, prefix="/api/auth")  
+app.include_router(flight_router, prefix="/api")  
+# app.include_router(service_router, prefix="/api")  # Include service routes
+app.include_router(map_router, prefix="/api")
+>>>>>>> 88379d82d2188f1a4613de40f6e1196a37633a61
 app.include_router(ticket_router, prefix="/api")
+app.include_router(hotel_router, prefix="/api")     
+app.include_router(car_router, prefix="/api")       
 
 
 

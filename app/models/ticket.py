@@ -12,6 +12,7 @@ class Ticket(Base):
     departure_time = Column(DateTime, nullable=False)
     arrival_time = Column(DateTime, nullable=False)
     price = Column(Float, nullable=False)
+    luggage_id = Column(String, nullable=True)  # Add luggage_id column
 
     def to_dict(self):
         return {
