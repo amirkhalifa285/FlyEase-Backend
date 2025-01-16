@@ -1,10 +1,11 @@
 from sqlalchemy import Column, Integer, String, DateTime, Float
+from sqlalchemy.orm import relationship
 from ..base import Base
 
 class Ticket(Base):
     __tablename__ = "tickets"
 
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(Integer, primary_key=True, autoincrement=True)
     airline_name = Column(String, nullable=False)
     flight_number = Column(String, nullable=False)
     origin = Column(String, nullable=False)
@@ -12,7 +13,14 @@ class Ticket(Base):
     departure_time = Column(DateTime, nullable=False)
     arrival_time = Column(DateTime, nullable=False)
     price = Column(Float, nullable=False)
-    luggage_id = Column(String, nullable=True)  # Add luggage_id column
+    luggage_id = Column(Integer, unique=True, nullable=True, index=True)
+
+    luggage = relationship(
+        "Luggage",
+        back_populates="ticket",
+        foreign_keys="[Luggage.ticket_id]",  # Explicitly set the foreign key for this relationship
+        uselist=False,
+    )
 
     def to_dict(self):
         return {
@@ -24,4 +32,5 @@ class Ticket(Base):
             "departure_time": self.departure_time.isoformat(),
             "arrival_time": self.arrival_time.isoformat(),
             "price": self.price,
+            "luggage_id": self.luggage_id,
         }

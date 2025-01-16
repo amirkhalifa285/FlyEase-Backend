@@ -11,6 +11,7 @@ from app.routes.hotel_router import router as hotel_router
 from app.routes.car_routes import router as car_router
 from app.db.database import create_tables
 from dotenv import load_dotenv
+from app.routes.admin_flight_router import router as admin_flight_router
 
 
 # Initialize FastAPI app
@@ -24,20 +25,14 @@ async def lifespan(app: FastAPI):
 # Use the lifespan function directly in FastAPI
 app = FastAPI(lifespan=lifespan)
 
+# Middleware for CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://192.168.56.1:3000"],  # Add both frontend origins
+    allow_origins=["http://localhost:3000"],  # Allow only your frontend
     allow_credentials=True,
     allow_methods=["*"],  # Allow all HTTP methods
     allow_headers=["*"],  # Allow all headers
 )
-<<<<<<< HEAD
-# Include routes
-
-app.include_router(auth_router, prefix="/api/auth")  # Include authentication routes
-app.include_router(flight_router, prefix="/api")  # Include flight routes
-
-=======
 
 load_dotenv()  # Load variables from .env into the environment
 print("Client ID:", os.getenv("AMADEUS_CLIENT_ID"))
@@ -48,13 +43,10 @@ app.include_router(auth_router, prefix="/api/auth")
 app.include_router(flight_router, prefix="/api")  
 # app.include_router(service_router, prefix="/api")  # Include service routes
 app.include_router(map_router, prefix="/api")
->>>>>>> 88379d82d2188f1a4613de40f6e1196a37633a61
 app.include_router(ticket_router, prefix="/api")
 app.include_router(hotel_router, prefix="/api")     
 app.include_router(car_router, prefix="/api")       
-
-
-
+app.include_router(admin_flight_router, prefix="/api")
 @app.get("/")
 def read_root():
     return {"message": "Welcome to FlyEase!"}
