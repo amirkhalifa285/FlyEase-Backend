@@ -1,54 +1,81 @@
 import requests
+from fastapi import HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
-from ..models.hotel import Hotel
-from ..auth.amadeus_auth import get_amadeus_access_token
+from app.models.hotel import Hotel
+from dotenv import load_dotenv
+import os
 
-HOTELS_BY_CITY_URL = "https://test.api.amadeus.com/v1/reference-data/locations/hotels/by-city"
+load_dotenv()
+API_KEY = os.getenv("GOOGLE_API_KEY")
+API_URL = "https://maps.googleapis.com/maps/api/place/nearbysearch/json"
 
-async def fetch_and_save_hotels(db: AsyncSession, city_code: str, limit: int, offset: int, access_token: str):
+async def fetch_and_save_hotels(location: str, radius: int, db: AsyncSession):
     """
-    Fetch hotels using Amadeus Hotel List API and save them to the database.
+    Fetch hotels from Google Places API and save them to the database.
     """
+    params = {
+        "location": location,
+        "radius": radius,
+        "type": "lodging",
+        "key": API_KEY,
+    }
+
+    response = requests.get(API_URL, params=params)
+
+    if response.status_code != 200:
+        raise HTTPException(status_code=response.status_code, detail=f"Failed to fetch hotels: {response.text}")
+
     try:
-        headers = {
-            "Authorization": f"Bearer {access_token}",
-            "Content-Type": "application/json",
-        }
-        params = {
-            "cityCode": city_code,
-            "page[limit]": limit,
-            "page[offset]": offset,
-        }
+        hotel_data = response.json()
+    except ValueError:
+        raise HTTPException(status_code=500, detail=f"Invalid JSON response: {response.text}")
 
-        response = requests.get(HOTELS_BY_CITY_URL, headers=headers, params=params)
-        if response.status_code != 200:
-            print("Error Response:", response.text)
-            raise Exception(f"Failed to fetch hotels: {response.text}")
+    if "results" not in hotel_data:
+        raise HTTPException(status_code=500, detail=f"Invalid response structure: {hotel_data}")
 
-        hotels_data = response.json().get("data", [])
-        print(f"Fetched {len(hotels_data)} hotels.")
-
-        # Save hotels to the database
-        for hotel in hotels_data:
-            existing_hotel = await db.execute(select(Hotel).where(Hotel.hotel_id == hotel["hotelId"]))
-            if existing_hotel.scalar():
-                continue
-
+    hotels = hotel_data["results"][:25]
+    for hotel in hotels:
+        try:
             new_hotel = Hotel(
-                hotel_id=hotel["hotelId"],
                 name=hotel["name"],
-                chain_code=hotel.get("chainCode", "Unknown"),
-                iata_code=hotel.get("iataCode", "Unknown"),
-                location=hotel.get("address", {}).get("countryCode", "Unknown"),
-                latitude=hotel.get("geoCode", {}).get("latitude"),
-                longitude=hotel.get("geoCode", {}).get("longitude"),
-                last_update=hotel.get("last_update", None),
+                address=hotel.get("vicinity", ""),
+                latitude=hotel["geometry"]["location"]["lat"],
+                longitude=hotel["geometry"]["location"]["lng"],
+                rating=hotel.get("rating"),
+                total_ratings=hotel.get("user_ratings_total"),
+                place_id=hotel["place_id"],
+                photo_reference=hotel.get("photos", [{}])[0].get("photo_reference"),
+                open_now=hotel.get("opening_hours", {}).get("open_now")
             )
             db.add(new_hotel)
+        except Exception as e:
+            print(f"Error processing hotel: {hotel}, Error: {e}")
+            continue
 
-        await db.commit()
-        print("Hotels saved successfully.")
-    except Exception as e:
-        print(f"Error fetching hotels: {str(e)}")
-        raise Exception(f"Error fetching hotels: {str(e)}")
+    await db.commit()
+
+async def get_cached_hotels(db: AsyncSession):
+    """
+    Retrieve all hotels from the database and generate full image URLs for the photo_reference.
+    """
+    GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")  # Securely load API key
+    BASE_PHOTO_URL = "https://maps.googleapis.com/maps/api/place/photo"
+
+    stmt = select(Hotel)
+    result = await db.execute(stmt)
+    hotels = result.scalars().all()
+
+    hotel_list = []
+    for hotel in hotels:
+        hotel_dict = hotel.to_dict()
+        if hotel_dict["photo_reference"]:
+            # Generate full photo URL
+            hotel_dict["photo_reference"] = f"{BASE_PHOTO_URL}?maxwidth=400&photoreference={hotel_dict['photo_reference']}&key={GOOGLE_API_KEY}"
+        else:
+            # Fallback for missing photos
+            hotel_dict["photo_reference"] = "https://via.placeholder.com/400x300?text=No+Image+Available"
+        hotel_list.append(hotel_dict)
+
+    return hotel_list
+

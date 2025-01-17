@@ -11,6 +11,7 @@ from app.routes.hotel_router import router as hotel_router
 from app.routes.car_routes import router as car_router
 from app.db.database import create_tables
 from dotenv import load_dotenv
+from app.routes.admin_flight_router import router as admin_flight_router
 
 
 # Initialize FastAPI app
@@ -45,7 +46,7 @@ app.include_router(map_router, prefix="/api")
 app.include_router(ticket_router, prefix="/api")
 app.include_router(hotel_router, prefix="/api")     
 app.include_router(car_router, prefix="/api")       
-
+app.include_router(admin_flight_router, prefix="/api")
 @app.get("/")
 def read_root():
     return {"message": "Welcome to FlyEase!"}

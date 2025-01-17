@@ -1,14 +1,30 @@
-from sqlalchemy import Column, Integer, String, Float, DateTime
-from ..base import Base
+from app.base import Base
+from sqlalchemy import Column, String, Integer, Float, Text, Boolean
 
 class Hotel(Base):
-    __tablename__ = "hotels"
-    id = Column(Integer, primary_key=True, index=True)
-    hotel_id = Column(String, unique=True, nullable=False)  # Unique ID for the hotel
-    name = Column(String, nullable=False)  # Hotel name
-    chain_code = Column(String, nullable=True)  # Chain code
-    iata_code = Column(String, nullable=True)  # IATA location code
-    location = Column(String, nullable=False)  # Location of the hotel
-    latitude = Column(Float, nullable=True)  # Latitude
-    longitude = Column(Float, nullable=True)  # Longitude
-    last_update = Column(DateTime, nullable=True)  # Last update timestamp
+    __tablename__ = 'hotels'
+
+    id = Column(Integer, primary_key=True)
+    name = Column(String(255), nullable=False)
+    address = Column(Text, nullable=False)
+    latitude = Column(Float, nullable=False)
+    longitude = Column(Float, nullable=False)
+    rating = Column(Float)
+    total_ratings = Column(Integer)
+    place_id = Column(String(255), unique=True, nullable=False)
+    photo_reference = Column(Text)
+    open_now = Column(Boolean)
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "name": self.name,
+            "address": self.address,
+            "latitude": self.latitude,
+            "longitude": self.longitude,
+            "rating": self.rating,
+            "total_ratings": self.total_ratings,
+            "place_id": self.place_id,
+            "photo_reference": self.photo_reference,
+            "open_now": self.open_now
+        }

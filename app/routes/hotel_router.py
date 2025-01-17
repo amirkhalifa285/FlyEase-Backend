@@ -1,47 +1,38 @@
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
-from ..db.database import get_db
-from ..controllers.hotel_controller import fetch_and_save_hotels
-from sqlalchemy.future import select
-from ..models.hotel import Hotel
-from ..auth.amadeus_auth import get_amadeus_access_token
-
+from app.db.database import get_db
+from app.controllers.hotel_controller import fetch_and_save_hotels, get_cached_hotels
+from pydantic import BaseModel
 
 router = APIRouter()
 
+class FetchHotelsRequest(BaseModel):
+    location: str  # Latitude and longitude as a string, e.g., "40.748817,-73.985428"
+    radius: int    # Search radius in meters
+
 @router.post("/hotels/fetch")
-async def fetch_hotels(
-    city_code: str = Query(..., description="The IATA city code to fetch hotels for"),
-    limit: int = 10,
-    offset: int = 0,
-    db: AsyncSession = Depends(get_db)
-):
+async def fetch_hotels_route(request: FetchHotelsRequest, db: AsyncSession = Depends(get_db)):
     """
-    Fetch hotels by city code using Amadeus API and save them to the database.
+    Fetch hotels from an external API (e.g., Google Places API) and save them to the database.
     """
     try:
-        # Fetch the access token from the token manager
-        access_token = get_amadeus_access_token()
-
-        # Call the controller function to fetch hotels
-        await fetch_and_save_hotels(db, city_code, limit, offset, access_token)
-
+        await fetch_and_save_hotels(
+            location=request.location,
+            radius=request.radius,
+            db=db
+        )
         return {"message": "Hotels fetched and saved successfully."}
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error fetching hotels: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 
 @router.get("/hotels")
-async def get_hotels(page: int = 1, limit: int = 10, db: AsyncSession = Depends(get_db)):
+async def get_hotels(db: AsyncSession = Depends(get_db)):
     """
-    Fetch hotels from the database for the frontend.
+    Fetch all cached hotels from the database.
     """
     try:
-        # Query hotels from the database with pagination
-        hotels_query = await db.execute(
-            select(Hotel).offset((page - 1) * limit).limit(limit)
-        )
-        hotels = hotels_query.scalars().all()
+        hotels = await get_cached_hotels(db)
         return hotels
     except Exception as e:
-        # Raise HTTPException for better error handling
-        raise HTTPException(status_code=500, detail=f"Error fetching hotels from database: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
