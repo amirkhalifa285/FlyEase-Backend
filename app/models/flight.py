@@ -1,3 +1,4 @@
+# app/models/flight.py
 from sqlalchemy import Column, Integer, String, DateTime
 from ..base import Base
 

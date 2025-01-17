@@ -1,28 +1,45 @@
 from fastapi import APIRouter, HTTPException, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.db.database import get_db
-from app.controllers.tickets_controller import (
-    book_ticket,
-    get_ticket_with_luggage,
-    fetch_all_tickets,
-)
+from app.controllers.tickets_controller import fetch_and_cache_tickets, get_cached_tickets, book_ticket
 from pydantic import BaseModel
+from app.models.ticket import Ticket
+from sqlalchemy.sql import select
 
 router = APIRouter()
 
-class BookTicketRequest(BaseModel):
-    ticket_id: int
-
 @router.get("/tickets")
-async def get_all_tickets_route(db: AsyncSession = Depends(get_db)):
+async def get_tickets(db: AsyncSession = Depends(get_db)):
     """
-    Get all tickets.
+    Fetch all tickets from the database.
+    """
+    result = await db.execute(select(Ticket))
+    tickets = result.scalars().all()
+    return [ticket.to_dict() for ticket in tickets]
+
+class FetchTicketsRequest(BaseModel):
+    origin: str
+    destination: str
+    departure_date: str
+
+@router.post("/tickets/fetch")
+async def fetch_tickets_route(request: FetchTicketsRequest, db: AsyncSession = Depends(get_db)):
+    """
+    Endpoint to fetch tickets from the external API and save them to the database.
     """
     try:
-        tickets = await fetch_all_tickets(db=db)
-        return tickets
+        await fetch_and_cache_tickets(
+            origin=request.origin,
+            destination=request.destination,
+            departure_date=request.departure_date,
+            db=db,
+        )
+        return {"message": "Tickets fetched and saved successfully."}
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error fetching tickets: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+class BookTicketRequest(BaseModel):
+    ticket_id: int
 
 @router.post("/tickets/book")
 async def book_ticket_route(request: BookTicketRequest, db: AsyncSession = Depends(get_db)):
@@ -32,16 +49,7 @@ async def book_ticket_route(request: BookTicketRequest, db: AsyncSession = Depen
     try:
         booking_info = await book_ticket(ticket_id=request.ticket_id, db=db)
         return booking_info
+    except HTTPException as e:
+        raise e
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-@router.get("/tickets/{ticket_id}")
-async def get_ticket_with_luggage_route(ticket_id: int, db: AsyncSession = Depends(get_db)):
-    """
-    Get ticket details along with luggage information.
-    """
-    try:
-        ticket_info = await get_ticket_with_luggage(ticket_id=ticket_id, db=db)
-        return ticket_info
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=f"An error occurred: {str(e)}")
