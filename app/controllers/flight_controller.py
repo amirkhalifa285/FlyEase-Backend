@@ -4,7 +4,7 @@ from ..models.flight import Flight
 import requests
 import os
 from datetime import datetime
-
+from fastapi import HTTPException
 API_KEY = os.getenv("FLIGHTS_API_KEY")  # Load the API key from the .env file
 BASE_URL = "http://api.aviationstack.com/v1/flights"
 
@@ -74,7 +74,25 @@ async def fetch_and_save_flights(db: AsyncSession, dep_iata: str = "TLV", limit:
     await db.commit()
 
 
+async def track_flight_by_number(flight_number: str, db: AsyncSession):
+    """
+    Fetch flight details using the flight number.
+    """
+    flight_result = await db.execute(select(Flight).where(Flight.flight_number == flight_number))
+    flight = flight_result.scalar_one_or_none()
 
+    if not flight:
+        raise HTTPException(status_code=404, detail="Flight not found.")
+
+    return {
+        "flight_number": flight.flight_number,
+        "airline_name": flight.airline_name,
+        "origin": flight.origin,
+        "destination": flight.destination,
+        "departure_time": flight.departure_time,
+        "arrival_time": flight.arrival_time,
+        "status": flight.status,
+    }
 
 
 

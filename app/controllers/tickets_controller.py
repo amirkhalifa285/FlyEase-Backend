@@ -123,3 +123,19 @@ async def book_ticket(ticket_id: int, db: AsyncSession):
         "flight_number": ticket.flight_number,
         "luggage_id": new_luggage.luggage_id
     }
+async def track_luggage_by_id(luggage_id: int, db: AsyncSession):
+    """
+    Fetch luggage details using the luggage ID.
+    """
+    luggage_result = await db.execute(select(Luggage).where(Luggage.luggage_id == luggage_id))
+    luggage = luggage_result.scalar_one_or_none()
+
+    if not luggage:
+        raise HTTPException(status_code=404, detail="Luggage not found.")
+
+    return {
+        "luggage_id": luggage.luggage_id,
+        "weight": luggage.weight,
+        "status": luggage.status,
+        "last_location": luggage.last_location,
+    }

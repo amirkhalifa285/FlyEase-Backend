@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from ..db.database import get_db
-from ..controllers.flight_controller import get_all_flights, create_flight, fetch_and_save_flights
+from ..controllers.flight_controller import get_all_flights, create_flight, fetch_and_save_flights,track_flight_by_number
 
 router = APIRouter()
 
@@ -29,3 +29,15 @@ async def add_flight(flight_data: dict, db: AsyncSession = Depends(get_db)):
     Manually add a flight to the database.
     """
     return await create_flight(db, flight_data)
+
+@router.get("/flights/track/{flight_number}")
+async def track_flight(flight_number: str, db: AsyncSession = Depends(get_db)):
+    """
+    Track a flight by its flight number.
+    """
+    try:
+        return await track_flight_by_number(flight_number, db)
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error tracking flight: {str(e)}")
