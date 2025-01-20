@@ -1,9 +1,12 @@
 from fastapi import APIRouter, HTTPException, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.db.database import get_db
-from app.controllers.tickets_controller import fetch_and_cache_tickets, get_cached_tickets, book_ticket, track_luggage_by_id
+from app.controllers.tickets_controller import fetch_and_cache_tickets, get_cached_tickets, book_ticket, track_luggage_by_id, fetch_user_tickets
 from pydantic import BaseModel
 from app.models.ticket import Ticket
+from app.models.users import User
+from ..auth.auth_utils import get_current_user
+
 from sqlalchemy.sql import select
 
 router = APIRouter()
@@ -42,17 +45,23 @@ class BookTicketRequest(BaseModel):
     ticket_id: int
 
 @router.post("/tickets/book")
-async def book_ticket_route(request: BookTicketRequest, db: AsyncSession = Depends(get_db)):
+async def book_ticket_route(
+    request: BookTicketRequest,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)  # Add current_user dependency
+):
     """
-    Book a ticket and assign a luggage entry.
+    Book a ticket and assign a luggage entry, associating it with the logged-in user.
     """
     try:
-        booking_info = await book_ticket(ticket_id=request.ticket_id, db=db)
+        # Pass current_user to associate the ticket with the logged-in user
+        booking_info = await book_ticket(ticket_id=request.ticket_id, db=db, current_user=current_user)
         return booking_info
     except HTTPException as e:
         raise e
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"An error occurred: {str(e)}")
+
     
     
 @router.get("/luggage/track/{luggage_id}")
@@ -66,3 +75,13 @@ async def track_luggage(luggage_id: int, db: AsyncSession = Depends(get_db)):
         raise e
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error tracking luggage: {str(e)}")    
+    
+
+@router.get("/my-tickets", tags=["Tickets"])
+async def get_my_tickets(
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Fetch tickets for the currently authenticated user.
+    """
+    return {"tickets": [ticket.to_dict() for ticket in current_user.tickets]}

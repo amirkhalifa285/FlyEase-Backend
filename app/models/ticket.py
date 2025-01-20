@@ -1,5 +1,3 @@
-
-# app/models/ticket.py
 from sqlalchemy import Column, Integer, String, DateTime, Float, ForeignKey
 from sqlalchemy.orm import relationship
 from ..base import Base
@@ -16,10 +14,12 @@ class Ticket(Base):
     arrival_time = Column(DateTime, nullable=False)
     price = Column(Float, nullable=False)
 
-    # This references the primary key in Luggage
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+
+    user = relationship("User", back_populates="tickets")
+
     luggage_id = Column(Integer, ForeignKey("luggage.luggage_id"), unique=True, nullable=True)
 
-    # One-to-one style relationship
     luggage = relationship("Luggage", back_populates="ticket", uselist=False)
 
     def to_dict(self):

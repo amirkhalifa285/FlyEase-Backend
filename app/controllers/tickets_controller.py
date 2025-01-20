@@ -5,6 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.ticket import Ticket
 from app.models.luggage import Luggage
 from app.models.flight import Flight
+from ..models.users import User
 from datetime import datetime
 import os
 
@@ -81,29 +82,34 @@ async def get_cached_tickets(origin: str, destination: str, departure_date: str,
     return [{"origin": t.origin, "destination": t.destination, "departure_time": t.departure_time,
              "arrival_time": t.arrival_time, "price": t.price, "airline_name": t.airline_name} for t in tickets]
 
-async def book_ticket(ticket_id: int, db: AsyncSession):
+async def book_ticket(ticket_id: int, db: AsyncSession, current_user: User):
     """
     Book a ticket, assign a luggage entry, and save flight details to the flights table.
     """
+    # Fetch the ticket
     ticket_result = await db.execute(select(Ticket).where(Ticket.id == ticket_id))
     ticket = ticket_result.scalar_one_or_none()
 
     if not ticket:
         raise HTTPException(status_code=404, detail="Ticket not found.")
 
-    if ticket.luggage_id:
-        raise HTTPException(status_code=400, detail="Ticket already booked with luggage.")
+    if ticket.user_id:
+        raise HTTPException(status_code=400, detail="Ticket already booked.")
 
+    # Assign a luggage entry
     new_luggage = Luggage(
         weight=20.0,
         status="Checked-in",
         last_location="Unknown"
     )
     db.add(new_luggage)
-    await db.flush()
+    await db.flush()  # Ensures luggage ID is generated
 
+    # Update the ticket's user_id and luggage_id
+    ticket.user_id = current_user.id
     ticket.luggage_id = new_luggage.luggage_id
 
+    # Save flight details to the flights table
     new_flight = Flight(
         airline_name=ticket.airline_name,
         flight_number=ticket.flight_number,
@@ -115,6 +121,7 @@ async def book_ticket(ticket_id: int, db: AsyncSession):
     )
     db.add(new_flight)
 
+    # Commit the changes
     await db.commit()
     await db.refresh(ticket)
 
@@ -123,6 +130,8 @@ async def book_ticket(ticket_id: int, db: AsyncSession):
         "flight_number": ticket.flight_number,
         "luggage_id": new_luggage.luggage_id
     }
+
+
 async def track_luggage_by_id(luggage_id: int, db: AsyncSession):
     """
     Fetch luggage details using the luggage ID.
@@ -139,3 +148,19 @@ async def track_luggage_by_id(luggage_id: int, db: AsyncSession):
         "status": luggage.status,
         "last_location": luggage.last_location,
     }
+
+async def fetch_user_tickets(db: AsyncSession, user_id: int):
+    """
+    Fetch tickets for a specific user asynchronously.
+    :param db: Async database session
+    :param user_id: ID of the user whose tickets need to be fetched
+    :return: JSON response with user tickets or a message if no tickets found
+    """
+    query = select(Ticket).filter(Ticket.user_id == user_id)
+    result = await db.execute(query)
+    tickets = result.scalars().all()
+    
+    if not tickets:
+        return {"message": "No tickets found for the current user"}
+    
+    return {"tickets": [ticket.to_dict() for ticket in tickets]}
