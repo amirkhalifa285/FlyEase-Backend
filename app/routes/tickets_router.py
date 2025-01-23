@@ -79,9 +79,18 @@ async def track_luggage(luggage_id: int, db: AsyncSession = Depends(get_db)):
 
 @router.get("/my-tickets", tags=["Tickets"])
 async def get_my_tickets(
+    db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
     """
     Fetch tickets for the currently authenticated user.
     """
-    return {"tickets": [ticket.to_dict() for ticket in current_user.tickets]}
+    try:
+        # Query tickets directly using user_id
+        result = await db.execute(
+            select(Ticket).where(Ticket.user_id == current_user.id)
+        )
+        tickets = result.scalars().all()
+        return {"tickets": [ticket.to_dict() for ticket in tickets]}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error fetching tickets: {str(e)}")

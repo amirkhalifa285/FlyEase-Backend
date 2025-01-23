@@ -6,7 +6,7 @@ from ..models.users import User
 
 async def signup(db, username: str, password: str, role: str, email: str):
     stmt = select(User).where(User.username == username)
-    result = await db.execute(stmt)  # Await the database execution
+    result = await db.execute(stmt)
     existing_user = result.scalars().first()
 
     if existing_user:
@@ -19,14 +19,20 @@ async def signup(db, username: str, password: str, role: str, email: str):
     await db.commit()
     await db.refresh(new_user)
     
-    # Return the user object as a dictionary
+    # Generate JWT token for the new user
+    token = create_access_token({"sub": new_user.username, "role": new_user.role})
+    
+    # Return the user object and token
     return {
         "id": new_user.id,
         "username": new_user.username,
         "role": new_user.role,
         "email": new_user.email,
-        "created_at": new_user.created_at
+        "created_at": new_user.created_at,
+        "access_token": token,
+        "token_type": "bearer"
     }
+
 
 
 async def login(db, username: str, password: str):

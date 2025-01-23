@@ -19,7 +19,6 @@ class LoginRequest(BaseModel):
 
 @router.post("/signup")
 async def signup_user(request: SignupRequest, db: AsyncSession = Depends(get_db)):
-    # Await the signup function
     return await signup(db, request.username, request.password, request.role, request.email)
 
 @router.post("/login")

@@ -14,3 +14,5 @@ class User(Base):
     created_at = Column(TIMESTAMP, server_default=func.now())
 
     tickets = relationship("Ticket", back_populates="user", cascade="all, delete")
+
+    messages = relationship("Message", back_populates="user", cascade="all, delete")

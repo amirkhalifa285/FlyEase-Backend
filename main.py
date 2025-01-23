@@ -1,6 +1,6 @@
 import sys
 import os
-from fastapi import FastAPI
+from fastapi import FastAPI, WebSocket
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 from app.routes.flight_routes import router as flight_router
@@ -9,10 +9,11 @@ from app.routes.map_routes import router as map_router
 from app.routes.tickets_router import router as ticket_router
 from app.routes.hotel_router import router as hotel_router
 from app.routes.user_routes import router as user_router
-#from app.routes.car_routes import router as car_router
+from app.routes.messages_router import router as messages_router
 from app.db.database import create_tables
 from dotenv import load_dotenv
 from app.routes.admin_flight_router import router as admin_flight_router
+from app.websocket.notifications import websocket_endpoint
 
 
 # Initialize FastAPI app
@@ -49,6 +50,12 @@ app.include_router(hotel_router, prefix="/api")
 #app.include_router(car_router, prefix="/api")       
 app.include_router(admin_flight_router, prefix="/api")
 app.include_router(user_router, prefix="/api")
+app.include_router(messages_router, prefix="/api")
+
+@app.websocket("/ws/notifications")
+async def notifications_websocket(websocket: WebSocket):
+    await websocket_endpoint(websocket)
+
 @app.get("/")
 def read_root():
     return {"message": "Welcome to FlyEase!"}

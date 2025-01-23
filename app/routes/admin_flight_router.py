@@ -1,4 +1,3 @@
-
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.db.database import get_db
@@ -38,10 +37,10 @@ async def admin_get_flights(db: AsyncSession = Depends(get_db)):
 async def admin_create_flight(flight_data: FlightCreateRequest, db: AsyncSession = Depends(get_db)):
     return await create_flight_admin(db, flight_data.dict())
 
-@router.put("/admin/flights/{flight_id}")
-async def admin_update_flight(flight_id: int, flight_data: FlightUpdateRequest, db: AsyncSession = Depends(get_db)):
-    return await update_flight_admin(db, flight_id, flight_data.dict(exclude_unset=True))
+@router.put("/admin/flights/{flight_number}")
+async def admin_update_flight(flight_number: str, flight_data: FlightUpdateRequest, db: AsyncSession = Depends(get_db)):
+    return await update_flight_admin(db, flight_number, flight_data.dict(exclude_unset=True))
 
-@router.delete("/admin/flights/{flight_id}")
-async def admin_delete_flight(flight_id: int, db: AsyncSession = Depends(get_db)):
-    return await delete_flight_admin(db, flight_id)
+@router.delete("/admin/flights/{flight_number}")
+async def admin_delete_flight(flight_number: str, db: AsyncSession = Depends(get_db)):
+    return await delete_flight_admin(db, flight_number)
