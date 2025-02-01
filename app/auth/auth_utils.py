@@ -1,5 +1,5 @@
 import jwt
-from jwt.exceptions import DecodeError, ExpiredSignatureError, PyJWTError
+from jwt.exceptions import ExpiredSignatureError, PyJWTError, InvalidTokenError
 from passlib.context import CryptContext
 from datetime import datetime, timedelta
 from fastapi import Depends, HTTPException
@@ -45,7 +45,7 @@ def decode_access_token(token: str):
         return jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
     except ExpiredSignatureError:
         raise ValueError("Token expired")
-    except DecodeError:
+    except InvalidTokenError:
         raise ValueError("Token is invalid")
     except PyJWTError as e:
         raise ValueError(f"Token decoding error: {str(e)}")
