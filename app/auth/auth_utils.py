@@ -1,5 +1,5 @@
 import jwt
-from jwt.exceptions import ExpiredSignatureError, PyJWTError, InvalidTokenError
+from jwt import ExpiredSignatureError, PyJWTError, InvalidTokenError
 from passlib.context import CryptContext
 from datetime import datetime, timedelta
 from fastapi import Depends, HTTPException
