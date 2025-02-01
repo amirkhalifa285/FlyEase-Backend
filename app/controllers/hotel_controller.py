@@ -130,7 +130,7 @@ async def get_cached_hotels(db: AsyncSession):
     """
     Retrieve all hotels from the database and generate full image URLs for the photo_reference.
     """
-    GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")  # Securely load API key
+    GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
     BASE_PHOTO_URL = "https://maps.googleapis.com/maps/api/place/photo"
 
     stmt = select(Hotel)
@@ -141,14 +141,12 @@ async def get_cached_hotels(db: AsyncSession):
     for hotel in hotels:
         hotel_dict = hotel.to_dict()
         if hotel_dict["photo_reference"]:
-            # Generate full photo URL
             hotel_dict["photo_reference"] = (
                 f"{BASE_PHOTO_URL}?maxwidth=400"
                 f"&photoreference={hotel_dict['photo_reference']}"
                 f"&key={GOOGLE_API_KEY}"
             )
         else:
-            # Fallback if there's no photo reference
             hotel_dict["photo_reference"] = "https://via.placeholder.com/400x300?text=No+Image+Available"
         hotel_list.append(hotel_dict)
 

@@ -5,7 +5,7 @@ import requests
 import os
 from datetime import datetime
 from fastapi import HTTPException
-API_KEY = os.getenv("FLIGHTS_API_KEY")  # Load the API key from the .env file
+API_KEY = os.getenv("FLIGHTS_API_KEY") 
 BASE_URL = "http://api.aviationstack.com/v1/flights"
 
 async def get_all_flights(db: AsyncSession):
@@ -31,7 +31,7 @@ async def fetch_and_save_flights(db: AsyncSession, dep_iata: str = "TLV", limit:
     """
     params = {
         "access_key": API_KEY,
-        "dep_iata": dep_iata,  # Replace with your airport's IATA code (e.g., TLV for Ben Gurion Airport)
+        "dep_iata": dep_iata,  
         "limit": limit,
     }
 
@@ -49,17 +49,15 @@ async def fetch_and_save_flights(db: AsyncSession, dep_iata: str = "TLV", limit:
             continue
 
         # Convert ISO timestamps to Python datetime objects
-        departure_time = datetime.fromisoformat(departure_time).replace(tzinfo=None)  # Make timezone-naive
-        arrival_time = datetime.fromisoformat(arrival_time).replace(tzinfo=None)      # Make timezone-naive
+        departure_time = datetime.fromisoformat(departure_time).replace(tzinfo=None)  
+        arrival_time = datetime.fromisoformat(arrival_time).replace(tzinfo=None)      
 
-        # Check if the flight already exists in the database
         existing_flight = await db.execute(
             select(Flight).where(Flight.flight_number == flight["flight"]["iata"])
         )
         if existing_flight.scalar():
             continue
 
-        # Create a new flight entry
         new_flight = Flight(
             airline_name=flight["airline"]["name"],
             flight_number=flight["flight"]["iata"],
@@ -94,19 +92,3 @@ async def track_flight_by_number(flight_number: str, db: AsyncSession):
         "status": flight.status,
     }
 
-
-
-# from sqlalchemy.ext.asyncio import AsyncSession
-# from sqlalchemy.future import select
-# from ..models.flight import Flight
-
-# async def get_all_flights(db: AsyncSession):
-#     result = await db.execute(select(Flight))
-#     return result.scalars().all()
-
-# async def create_flight(db: AsyncSession, flight_data: dict):
-#     new_flight = Flight(**flight_data)
-#     db.add(new_flight)
-#     await db.commit()
-#     await db.refresh(new_flight)
-#     return new_flight

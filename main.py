@@ -43,11 +43,9 @@ print("Client Secret:", os.getenv("AMADEUS_CLIENT_SECRET"))
 # Include routes
 app.include_router(auth_router, prefix="/api/auth")  
 app.include_router(flight_router, prefix="/api")  
-# app.include_router(service_router, prefix="/api")  # Include service routes
 app.include_router(map_router, prefix="/api")
 app.include_router(ticket_router, prefix="/api")
-app.include_router(hotel_router, prefix="/api")     
-#app.include_router(car_router, prefix="/api")       
+app.include_router(hotel_router, prefix="/api")        
 app.include_router(admin_flight_router, prefix="/api")
 app.include_router(user_router, prefix="/api")
 app.include_router(messages_router, prefix="/api")

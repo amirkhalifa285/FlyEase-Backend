@@ -2,7 +2,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from fastapi import HTTPException
 from datetime import datetime
-from app.models.ticket import Ticket  # Use Ticket instead of Flight
+from app.models.ticket import Ticket 
 from app.models.messages import Message
 from app.websocket.notifications import broadcast_message
 

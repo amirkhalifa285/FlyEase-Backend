@@ -1,5 +1,5 @@
 import jwt
-from jwt import DecodeError, ExpiredSignatureError, exceptions
+from jwt.exceptions import DecodeError, ExpiredSignatureError, PyJWTError
 from passlib.context import CryptContext
 from datetime import datetime, timedelta
 from fastapi import Depends, HTTPException
@@ -47,7 +47,7 @@ def decode_access_token(token: str):
         raise ValueError("Token expired")
     except DecodeError:
         raise ValueError("Token is invalid")
-    except exceptions.PyJWTError as e:
+    except PyJWTError as e:
         raise ValueError(f"Token decoding error: {str(e)}")
     
 
@@ -60,7 +60,6 @@ async def get_current_user(
     """
     Decode the JWT, retrieve the user ID, and fetch the user object with tickets eagerly loaded.
     """
-    #print(f"Token received: {token}")
     try:
         payload = decode_access_token(token)
         user_id_or_username = payload.get("sub")
@@ -77,7 +76,6 @@ async def get_current_user(
             query = select(User).options(joinedload(User.tickets)).filter(User.username == user_id_or_username)
 
         result = await db.execute(query)
-        # Use unique() to deduplicate rows caused by joined eager loading
         user = result.unique().scalar_one_or_none()
 
         if not user:
