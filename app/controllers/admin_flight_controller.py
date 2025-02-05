@@ -4,6 +4,7 @@ from fastapi import HTTPException
 from datetime import datetime
 from app.models.ticket import Ticket 
 from app.models.messages import Message
+from app.models.flight import Flight
 from app.websocket.notifications import broadcast_message
 
 async def get_all_flights_admin(db: AsyncSession):
@@ -40,7 +41,8 @@ async def update_flight_admin(db: AsyncSession, flight_number: str, updated_data
     Update an existing flight's details using flight_number (Admin Functionality).
     """
     try:
-        result = await db.execute(select(Ticket).where(Ticket.flight_number == flight_number))
+        # Fetch the flight record using flight_number
+        result = await db.execute(select(Flight).where(Flight.flight_number == flight_number))
         flight = result.scalar_one_or_none()
 
         if not flight:
@@ -60,50 +62,30 @@ async def update_flight_admin(db: AsyncSession, flight_number: str, updated_data
         await db.refresh(flight)
 
         # Notify users and save to database
-        message_content = f"Flight {flight_number} status changed to: {updated_data.get('status', 'updated')}"
-        await notify_users_about_flight(flight_number, message_content, db)
+        if "status" in updated_data:
+            message_content = f"Flight {flight_number} status changed to: {updated_data['status']}"
+            await notify_users_about_flight(flight_number, message_content, db)
 
-        # Broadcast WebSocket message
-        await broadcast_message(message_content)
+            # Broadcast WebSocket message
+            await broadcast_message(message_content)
 
         return flight.to_dict()
-    
+
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error updating flight: {str(e)}")
 
 
 async def notify_users_about_flight(flight_number: str, content: str, db: AsyncSession):
-    """Create messages for users who booked this flight"""
+    """
+    Notify all users who booked the flight by creating messages.
+    """
     # Get all users with tickets for this flight
-    result = await db.execute(
-        select(Ticket.user_id).where(Ticket.flight_number == flight_number)
-    )
+    result = await db.execute(select(Ticket.user_id).where(Ticket.flight_number == flight_number))
     user_ids = result.scalars().all()
 
     # Create a message for each user
     for user_id in user_ids:
-        new_message = Message(
-            user_id=user_id,
-            content=content,
-            status="unread"
-        )
+        new_message = Message(user_id=user_id, content=content, status="unread")
         db.add(new_message)
-    
+
     await db.commit()  # Commit the messages
-
-
-async def delete_flight_admin(db: AsyncSession, flight_number: str):
-    """
-    Delete a flight from the database (Admin Functionality).
-    """
-    try:
-        result = await db.execute(select(Ticket).where(Ticket.flight_number == flight_number))
-        flight = result.scalar_one_or_none()
-        if not flight:
-            raise HTTPException(status_code=404, detail="Flight not found")
-        
-        await db.delete(flight)
-        await db.commit()
-        return {"message": "Flight deleted successfully"}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error deleting flight: {str(e)}")
