@@ -29,7 +29,7 @@ Before setting up the project, ensure you have the following installed:
 
 1. **Clone the backend repository**
    ```
-   git clone [Your-Backend-Repository-URL]
+   git clone https://github.com/amirkhalifa285/FlyEase-Backend
    cd FlyEase-Backend/FlyEase-Backend
    ```
 
@@ -90,7 +90,7 @@ If you need to inspect the database for debugging purposes:
 1. **Clone the frontend repository**
    ```
    # Open a new terminal (keep backend running in original terminal)
-   git clone [Your-Frontend-Repository-URL]
+   git clone https://github.com/amirkhalifa285/FlyEase-Frontend
    cd FlyEase-Frontend
    ```
 
