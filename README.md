@@ -1,5 +1,11 @@
 # FlyEase Project Setup Guide
 
+## Project Repositories
+
+This project consists of two separate repositories:
+- Backend repository: https://github.com/amirkhalifa285/FlyEase-Backend
+- Frontend repository: https://github.com/amirkhalifa285/FlyEase-Frontend
+
 ## Prerequisites
 
 Before setting up the project, ensure you have the following installed:
@@ -21,9 +27,9 @@ Before setting up the project, ensure you have the following installed:
 
 ## Backend Setup
 
-1. **Clone the repository**
+1. **Clone the backend repository**
    ```
-   git clone [your-repository-url]
+   git clone [Your-Backend-Repository-URL]
    cd FlyEase-Backend/FlyEase-Backend
    ```
 
@@ -81,9 +87,10 @@ If you need to inspect the database for debugging purposes:
 
 ## Frontend Setup
 
-1. **Navigate to the frontend directory**
+1. **Clone the frontend repository**
    ```
-   # Open a new terminal (keep backend running)
+   # Open a new terminal (keep backend running in original terminal)
+   git clone [Your-Frontend-Repository-URL]
    cd FlyEase-Frontend
    ```
 
@@ -131,7 +138,3 @@ If you need to inspect the database for debugging purposes:
    - Check that backend is running on the expected port
    - Verify that the frontend is configured to use the correct API URL
 
-## Contact Information
-
-For any further issues or questions, please contact:
-[Your contact information]
