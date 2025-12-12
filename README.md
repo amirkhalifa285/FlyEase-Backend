@@ -137,3 +137,7 @@ If you need to inspect the database for debugging purposes:
 5. **Frontend API connection issues**
    - Check that backend is running on the expected port
    - Verify that the frontend is configured to use the correct API URL
+<<<<<<< HEAD
+=======
+
+>>>>>>> ff408112f20734eba72405e0e8e2ec8a76d026a1
