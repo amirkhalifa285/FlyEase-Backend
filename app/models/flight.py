@@ -1,13 +1,19 @@
 # app/models/flight.py
-from sqlalchemy import Column, Integer, String, DateTime
+from sqlalchemy import Column, Integer, String, DateTime, Index
 from ..base import Base
 
 class Flight(Base):
     __tablename__ = "flights"
+    
+    # Add composite index for common queries
+    __table_args__ = (
+        Index('ix_flights_origin_destination', 'origin', 'destination'),
+        Index('ix_flights_departure', 'departure_time'),
+    )
 
     id = Column(Integer, primary_key=True, index=True)
     airline_name = Column(String, nullable=False)
-    flight_number = Column(String, nullable=False)
+    flight_number = Column(String, nullable=False, unique=True, index=True)
     origin = Column(String, nullable=False)
     destination = Column(String, nullable=False)
     departure_time = Column(DateTime, nullable=False)
