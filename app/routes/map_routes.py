@@ -36,11 +36,11 @@ async def navigate(request: NavigationRequest, db: AsyncSession = Depends(get_db
     return await calculate_shortest_path(request.source_id, request.destination_id, db)
 
 #admin
-@router.post("/admin/map/location")
+@router.post("/admin/map/location", dependencies=[Depends(admin_only)])
 async def create_location(location_data: dict, db: AsyncSession = Depends(get_db)):
     return await add_location(location_data, db)
 
-@router.post("/admin/map/path")
+@router.post("/admin/map/path", dependencies=[Depends(admin_only)])
 async def create_path(path_data: dict, db: AsyncSession = Depends(get_db)):
     return await add_path(path_data, db)
 

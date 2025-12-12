@@ -20,7 +20,7 @@ async def signup(db, username: str, password: str, role: str, email: str):
     await db.refresh(new_user)
     
     # Generate JWT token for the new user
-    token = create_access_token({"sub": new_user.username, "role": new_user.role})
+    token = create_access_token({"sub": str(new_user.id), "role": new_user.role})
     
     # Return the user object and token
     return {
@@ -44,7 +44,7 @@ async def login(db, username: str, password: str):
         raise HTTPException(status_code=401, detail="Invalid credentials")
     
     # Generate JWT token
-    token = create_access_token({"sub": user.username, "role": user.role})
+    token = create_access_token({"sub": str(user.id), "role": user.role})
     #print(f"Generated token: {token}")  # Debugging line
     return {
         "access_token": token,

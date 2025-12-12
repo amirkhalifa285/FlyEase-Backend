@@ -9,10 +9,11 @@ from sqlalchemy.future import select
 from app.models.users import User
 from ..db.database import get_db
 from sqlalchemy.orm import joinedload
+from app.core.settings import settings
 
 
-# Configuration
-SECRET_KEY = "your_secret_key"  # Replace with environment variable
+# Configuration - now using environment variable
+SECRET_KEY = settings.SECRET_KEY
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60
 
@@ -51,7 +52,7 @@ def decode_access_token(token: str):
         raise ValueError(f"Token decoding error: {str(e)}")
     
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/login")
 
 async def get_current_user(
     token: str = Depends(oauth2_scheme),

@@ -6,6 +6,7 @@ from app.controllers.admin_flight_controller import (
     create_flight_admin,
     update_flight_admin,
 )
+from app.auth.auth_utils import admin_only
 from pydantic import BaseModel
 from typing import Optional
 from datetime import datetime
@@ -30,15 +31,15 @@ class FlightUpdateRequest(BaseModel):
     arrival_time: Optional[datetime] = None
     status: Optional[str] = None
 
-@router.get("/admin/flights")
+@router.get("/admin/flights", dependencies=[Depends(admin_only)])
 async def admin_get_flights(db: AsyncSession = Depends(get_db)):
     return await get_all_flights_admin(db)
 
-@router.post("/admin/flights")
+@router.post("/admin/flights", dependencies=[Depends(admin_only)])
 async def admin_create_flight(flight_data: FlightCreateRequest, db: AsyncSession = Depends(get_db)):
     return await create_flight_admin(db, flight_data.dict())
 
-@router.put("/admin/flights/{flight_number}")
+@router.put("/admin/flights/{flight_number}", dependencies=[Depends(admin_only)])
 async def admin_update_flight(flight_number: str, flight_data: FlightUpdateRequest, db: AsyncSession = Depends(get_db)):
     return await update_flight_admin(db, flight_number, flight_data.dict(exclude_unset=True))
 
