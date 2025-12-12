@@ -7,10 +7,11 @@ __pycache__/
 env/
 venv/
 ENV/
-*.env
+.venv/
 
-# Environment variables
+# Environment variables - NEVER commit secrets!
 .env
+!.env.example
 
 # Logs
 *.log
@@ -49,10 +50,23 @@ Thumbs.db
 desktop.ini
 
 # Dependency directories
-__pycache__/
 pip-log.txt
 pip-delete-this-directory.txt
 
 # FastAPI-related
 instance/
 uploads/
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.nox/
+
+# Type checking
+.mypy_cache/
+.pytype/
+
+# Jupyter (if used)
+.ipynb_checkpoints/
